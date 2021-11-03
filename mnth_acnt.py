@@ -12,6 +12,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from sqlalchemy.sql import operators, extract
+
+import pdb
 # --------------------------------------------------
 def get_args():
     """Get command-line arguments"""
@@ -96,20 +98,41 @@ def main():
     if qwart==0:
         ''' Отчет за один месяц '''
         
-        nmb = session.query(func.count(ills.AN_NOMISS)).filter(ills.I_OTDELEN==otd,
+#        nmb = session.query(func.count(ills.AN_NOMISS)).filter(ills.I_OTDELEN==otd,
+#            extract('year',ills.I_DATEOU_O)==year,
+#            extract('month',ills.I_DATEOU_O)==month).scalar()
+        
+        tbl = session.query(ills).filter(ills.I_OTDELEN==otd,
             extract('year',ills.I_DATEOU_O)==year,
-            extract('month',ills.I_DATEOU_O)==month).scalar()
- 
+            extract('month',ills.I_DATEOU_O)==month)
+
+#        pdb.set_trace()
 
     else:
         ''' Отчет за несколько месяцев, начиная с первого '''
 
-        nmb = session.query(func.count(ills.AN_NOMISS)).filter(ills.I_OTDELEN==otd,
+        tbl = session.query(ills).filter(ills.I_OTDELEN==otd,
             extract('year',ills.I_DATEOU_O)==year,
             extract('month',ills.I_DATEOU_O)<=qwart,
-            extract('month',ills.I_DATEOU_O)>=1).scalar()
+            extract('month',ills.I_DATEOU_O)>=1)
  
-    print(f'Выписано за {month} месяц {year} года в {otd} отделении {nmb} пациентов')
+    print(f'Выписано за {month} месяц {year} года в {otd} отделении {tbl.count()} пациентов')
+#    print(tbl.AN_AMBKART)
+#    [print(i.AN_NOMISS) for i in tbl.all()]
+    
+    q = session.query(
+            ills,kartotek,oper).filter(
+                    ills.I_OTDELEN==otd,
+                    extract('year',ills.I_DATEOU_O)==year,
+                    extract('month',ills.I_DATEOU_O)==month).filter(
+                    ills.AN_AMBKART == kartotek.AN_AMBKART).filter(
+                    ills.AN_AMBKART == oper.AN_AMBKART).all()
+    [print(i.kartotek.K_NAME, i.oper.AN_DATEWYP,i.oper.AN_NAME_OPER) for i in q]
+
+
+
+
+
 
 
 
